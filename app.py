@@ -1,3 +1,4 @@
+from click import password_option
 from flask import Flask, request, jsonify
 from models.user import User
 from database import db
@@ -43,6 +44,22 @@ def login():
 def logout():
     logout_user()
     return jsonify({'message': 'Logout realizado com sucesso'})
+
+
+@app.route('/user', methods=['POST'])
+@login_required
+def create_user():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    if username and password:
+        user = User(username=username, password=password)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({'message': "Usuaŕio cadastrado com sucesso"})
+
+    return jsonify({'message': 'Dados inválidas'}), 400
 
 
 @app.route('/hello-world', methods=['GET'])
