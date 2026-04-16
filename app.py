@@ -1,5 +1,3 @@
-import struct
-
 from flask import Flask, request, jsonify
 from models.user import User
 from database import db
@@ -8,18 +6,14 @@ import bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-# Formato: mysql+pymysql://usuário:senha@host:porta/nome_do_banco
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:admin123@127.0.0.1:3306/flask-crud'
 
 login_manager = LoginManager()
 db.init_app(app)
 login_manager.init_app(app)
 
-# view
 login_manager.login_view = 'login'
 
-
-# Session <- conexão ativa
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
@@ -36,7 +30,6 @@ def login():
 
         if user and bcrypt.checkpw(str.encode(password), str.encode(user.password)):
             login_user(user)
-            # print(current_user.is_authenticated)
             return jsonify({'message': 'Autenticação realizada com sucesso'})
 
     return jsonify({'message': 'Credenciais inválidas'}), 400
