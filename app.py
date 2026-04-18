@@ -3,16 +3,28 @@ from models.user import User
 from database import db
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 import bcrypt
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
+MYSQL_USER = os.getenv('MYSQL_USER')
+MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
+MYSQL_ROOT_PASSWORD = os.getenv('MYSQL_ROOT_PASSWORD')
+MYSQL_HOST = os.getenv('MYSQL_HOST')
+# print([MYSQL_USER,MYSQL_PASSWORD,MYSQL_DATABASE,MYSQL_ROOT_PASSWORD, SECRET_KEY])
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:admin123@127.0.0.1:3306/flask-crud'
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}'
 
 login_manager = LoginManager()
 db.init_app(app)
 login_manager.init_app(app)
 
 login_manager.login_view = 'login'
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -32,7 +44,7 @@ def login():
             login_user(user)
             return jsonify({'message': 'Autenticação realizada com sucesso'})
 
-    return jsonify({'message': 'Credenciais inválidas'}), 400
+        return jsonify({'message': 'Credenciais inválidas'}), 400
 
 
 @app.route('/logout', methods=['GET'])
@@ -53,7 +65,7 @@ def create_user():
         user = User(username=username, password=hashed_password, role='user')
         db.session.add(user)
         db.session.commit()
-        return jsonify({'message': "Usuaŕio cadastrado com sucesso"})
+        return jsonify({'message': "Usuário cadastrado com sucesso"})
 
     return jsonify({'message': 'Dados inválidas'}), 400
 
@@ -79,10 +91,11 @@ def update_user(id_user):
         return jsonify({'message': "Operação não permitida"}), 403
 
     if user and data.get('password'):
-        user.password = data.get('password')
+        hashed_password = bcrypt.hashpw(str.encode(data.get('password')), bcrypt.gensalt())
+        user.password = hashed_password
         db.session.commit()
 
-        return jsonify({'message': f"Usuário {user.username} atualizado com sucesso!"})
+        return jsonify({'message': f"Senha do usuário {user.username} atualizado com sucesso!"})
 
     return jsonify({'message': 'Usuário não encontrado'}), 404
 
@@ -104,7 +117,7 @@ def delete_user(id_user):
 
         return jsonify({'message': f'Usuário {user.username} deletado com sucesso'})
 
-    return jsonify({'message': 'Usuário não encontrado'}), 404
+        return jsonify({'message': 'Usuário não encontrado'}), 404
 
 
 if __name__ == "__main__":
